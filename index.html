@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=utf-8>
+    <title>3D Viewer</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100%;
+        }
+        html { height: 100%; }
+        canvas { width: 100%; height: 100% }
+    </style>
+</head>
+<body>
+<div style="width: 20%;float: left;">
+    <textarea id="inputarea" rows="10" placeholder="Insert points in new lines, seperated by comma or space"></textarea>
+    <button onclick="addPoints()">+ Points</button>
+    <button onclick="addLine()">+ Line</button>
+
+</div>
+<div id="renderingarea" style="width: 80%; height: 100%; float: right;"></div>
+<script src="js/three.js"></script>
+<script src="js/OrbitControls.js"></script>
+<script>
+    var points = []
+    var lines = []
+
+
+    //setup framework
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera( 75, document.getElementById("renderingarea").offsetWidth / document.getElementById("renderingarea").offsetHeight, 0.1, 1000 );
+    var controls = new THREE.OrbitControls( camera, document.getElementById("renderingarea") );
+
+    //scene setup
+    var renderer = new THREE.WebGLRenderer();
+    renderer.setSize( document.getElementById("renderingarea").offsetWidth, document.getElementById("renderingarea").offsetHeight );
+    document.getElementById("renderingarea").appendChild( renderer.domElement );
+    //init
+    createCoordSystem()
+
+
+    camera.position.z = 10;
+    controls.update();
+
+    function addLine() {
+        var material = new THREE.LineBasicMaterial({color: 0xfcb61e});
+
+        var input = document.getElementById("inputarea").value
+        var inputLines = input.split("\n")
+
+        var startCoords = inputLines[0].split(/[\s,]+/)
+        var start = new THREE.Vector3(parseFloat(startCoords[0]), parseFloat(startCoords[1]), parseFloat(startCoords[2]) )
+        var geo = new THREE.Geometry()
+        geo.vertices.push(start)
+
+        var dirCoords = inputLines[1].split(/[\s,]+/)
+        var scale = parseFloat(inputLines[2]) || 1.0
+        var end = new THREE.Vector3(start.x + scale * parseFloat(dirCoords[0]), start.y + scale * parseFloat(dirCoords[1]), start.z + scale * parseFloat(dirCoords[2]))
+        console.log(end)
+        geo.vertices.push(end)
+
+        lines.push(new THREE.Line(geo, material))
+
+        drawAll()
+    }
+
+    function addPoints() {
+        var input = document.getElementById("inputarea").value
+        var inputLines = input.split("\n")
+        for (i = 0;  i < inputLines.length; i++) {
+            var line = inputLines[i]
+            coords = line.split(/[\s,]+/)
+            console.log(coords)
+            var geo = new THREE.SphereGeometry(0.1, 32, 32)
+            var materialPoint = new THREE.MeshBasicMaterial( { color: 0xf4e916 } );
+            var p = new THREE.Mesh(geo, materialPoint)
+            p.position.x = coords[0]
+            p.position.y = coords[1]
+            p.position.z = coords[2]
+
+            points.push(p)
+        }
+        drawAll()
+
+
+    }
+    
+    function drawAll() {
+
+        for (i=0; i < points.length; i++) {
+
+            scene.add(points[i])
+        }
+
+        for (i=0;i < lines.length; i++) {
+           scene.add(lines[i])
+        }
+    }
+
+    function createCoordSystem() {
+        var materialX = new THREE.LineBasicMaterial( { color: 0xf90909 } );
+        var materialY = new THREE.LineBasicMaterial( { color: 0x15d825 } );
+        var materialZ = new THREE.LineBasicMaterial( { color: 0x0d09f9 } );
+
+        var geoX = new THREE.Geometry()
+        geoX.vertices.push(
+            new THREE.Vector3(-1000, 0, 0),
+            new THREE.Vector3(1000, 0, 0)
+        )
+
+        var geoY = new THREE.Geometry()
+        geoY.vertices.push(
+            new THREE.Vector3(0, -1000, 0),
+            new THREE.Vector3(0, 1000, 0)
+        )
+
+        var geoZ = new THREE.Geometry()
+        geoZ.vertices.push(
+            new THREE.Vector3(0, 0, -1000),
+            new THREE.Vector3(0, 0, 1000)
+        )
+        scene.add(new THREE.Line(geoX, materialX))
+        scene.add(new THREE.Line(geoY, materialY))
+        scene.add(new THREE.Line(geoZ, materialZ))
+
+    }
+
+    //render loop
+    function animate() {
+        requestAnimationFrame( animate );
+        renderer.render( scene, camera );
+    }
+    animate();
+
+</script>
+
+
+
+
+</body>
+</html>
